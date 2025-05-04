@@ -27,7 +27,7 @@ const { postComment } = require('./postComment');
         const context = Github.context;
         const repoContext = Github.context.repo;
         const owner = repoContext.owner;
-        const repo = repoConte
+        const repo = repoContext.repo;
         
         const prNumber = context.payload.pull_request?.number;
         let issue;
