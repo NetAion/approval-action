@@ -1,4 +1,5 @@
 const Core = require('@actions/core');
+const { appendMetadata } = require('./appendMetadata');
 
 /**
  * Opens a new issue using the provided Octokit instance.
@@ -14,11 +15,11 @@ const Core = require('@actions/core');
  */
 async function openIssue(octokit, context, issueTitle, issueBody, issueLabels, approvers) {
     try {
-        issueBody = `${issueBody}\n\n__Minimum Approvals:__ ${Core.getInput('minimumApprovals')}\n__Approval Words:__ ${Core.getInput('approveWords')}\n__Rejection Words:__ ${Core.getInput('rejectWords')}`
+        const bodyWithMetadata = appendMetadata(issueBody);
         const issue = await octokit.rest.issues.create({
             ...context.repo,
             title: issueTitle,
-            body: issueBody,
+            body: bodyWithMetadata,
             labels: issueLabels && issueLabels.length > 0 ? issueLabels : undefined,
             assignees: approvers
         });

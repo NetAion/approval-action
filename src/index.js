@@ -28,6 +28,9 @@ const { openIssue } = require('./openIssue');
         const owner = repoContext.owner;
         const repo = repoContext.repo;
 
+        let issue;
+        let shouldClose = false;
+
         Core.debug(`Issue title: ${issueTitle}`);
         Core.debug(`Issue body: ${issueBody}`);
         Core.debug(`Approvers: ${approvers}`);
@@ -43,13 +46,23 @@ const { openIssue } = require('./openIssue');
         const octokit = Github.getOctokit(token);
         Core.debug('Got octokit');
 
-        Core.debug('Creating issue')
-        const issue = await openIssue(octokit, context, issueTitle, issueBody, issueLabels, approvers);
-        Core.debug('Created issue')
+        if (context.issue.number) {
+            Core.debug('Posting comment on existing issue');
+            issue = await postComment(octokit, context, issueBody, issueLabels, approvers);
+            Core.debug('Posted comment');
+            // because this was a pre-existing issue, we do *not* close it at the end
+            shouldClose = false;
+        } else {
+            Core.debug('Creating issue');
+            issue = await openIssue(octokit, context, issueTitle, issueBody, issueLabels, approvers);
+            Core.debug('Created issue');
+            // we opened the issue ourselves, so closing later makes sense
+            shouldClose = true;
+        }
 
-        Core.debug('Waiting for issue to approval')
-        const approved = await waitForApproval(octokit, owner, repo, issue.data.number, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, waitTimeout);
-        Core.debug('Issue closed')
+        Core.debug('Waiting for issue approval');
+        const approved = await waitForApproval(octokit, owner, repo, issue.data.number, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, waitTimeout, shouldClose);
+        Core.debug('Issue review completed');
 
         if (approved) {
             Core.debug('Issue approved')

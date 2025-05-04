@@ -12,10 +12,11 @@ const Core = require('@actions/core');
  * @param {string[]} rejectWords - An array of words that indicate rejection.
  * @param {number} waitInterval - The interval in minutes to wait before checking for updates.
  * @param {number} timeout - The timeout in minutes for waiting for approval.
+ * @param {boolean} shouldClose - Whether to close the issue after approval.
  * @returns {Promise<void>} - A promise that resolves when the approval process is complete.
  * @throws {Error} - If the approval process times out or encounters an error.
  */
-async function waitForApproval(octokit, owner, repo, issueNumber, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, timeout) {
+async function waitForApproval(octokit, owner, repo, issueNumber, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, timeout, shouldClose) {
     try {
         let issue = await octokit.rest.issues.get({
             owner,
@@ -63,12 +64,14 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                                 issue_number: issueNumber,
                                 body: `Approved by ${lastComment.user.login}.`
                             });
-                            await octokit.rest.issues.update({
-                                owner,
-                                repo,
-                                issue_number: issueNumber,
-                                state: 'closed'
-                            });
+                            if (shouldClose) {
+                                await octokit.rest.issues.update({
+                                    owner,
+                                    repo,
+                                    issue_number: issueNumber,
+                                    state: 'closed'
+                                });
+                            };
                             break;
                         }
                     } else if (rejectWordsFound.length > 0) {
@@ -82,12 +85,14 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                                 issue_number: issueNumber,
                                 body: `Rejected by ${lastComment.user.login}.`
                             });
-                            await octokit.rest.issues.update({
-                                owner,
-                                repo,
-                                issue_number: issueNumber,
-                                state: 'closed'
-                            });
+                            if (shouldClose) {
+                                await octokit.rest.issues.update({
+                                    owner,
+                                    repo,
+                                    issue_number: issueNumber,
+                                    state: 'closed'
+                                });
+                            };
                             break;
                         }
                     }
@@ -107,13 +112,15 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                 body: `Timed out after waiting for ${timeout} minutes for approval.`
             });
 
-            await octokit.rest.issues.update({
-                owner,
-                repo,
-                issue_number: issueNumber,
-                state: 'closed'
-            });
-
+            if (shouldClose) {
+                await octokit.rest.issues.update({
+                    owner,
+                    repo,
+                    issue_number: issueNumber,
+                    state: 'closed'
+                });
+            };
+            
             Core.setFailed(`Timed out after waiting for ${timeout} minutes for approval.`);
         }else if (haveApproved >= minimumApprovals) {
             return true;
