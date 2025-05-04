@@ -48,18 +48,24 @@ const { postComment } = require('./postComment');
         const octokit = Github.getOctokit(token);
         Core.debug('Got octokit');
 
+        Core.debug(`Event name: ${context.eventName}`);
+        Core.debug(`Payload keys: ${Object.keys(context.payload).join(',')}`);
+        Core.debug(`PR object: ${JSON.stringify(context.payload.pull_request, null, 2)}`);
+
         if (prNumber) {
             Core.debug(`Detected PR number: ${prNumber}`);
-            context.issue = {
-                ...context.repo,
-                number: prNumber
-              };
+            context.issue = { ...context.repo, number: prNumber };
             Core.debug(`Posting comment on existing issue ${context.issue.number}`);
             issue = await postComment(octokit, context, issueBody, issueLabels, approvers);
             Core.debug('Posted comment');
             // because this was a pre-existing issue, we do *not* close it at the end
             shouldClose = false;
         } else {
+            // only open a new issue when explicitly invoked without a PR context
+            if (!Core.getInput('issueTitle')) {
+                throw new Error('issueTitle input is required when not commenting on a PR');
+            }
+            
             Core.debug('No PR number detected, creating issue instead');
             issue = await openIssue(octokit, context, issueTitle, issueBody, issueLabels, approvers);
             Core.debug('Created issue');

@@ -29,6 +29,7 @@ async function openIssue(octokit, context, issueTitle, issueBody, issueLabels, a
         Core.error(error);
         Core.error(error.stack);
         Core.setFailed("Failed to create a new issue.");
+        throw error;
     }
 
     return issue;
