@@ -2,6 +2,7 @@ const Core = require('@actions/core');
 const Github = require('@actions/github');
 const { waitForApproval } = require('./waitForApproval');
 const { openIssue } = require('./openIssue');
+const { postComment } = require('./postComment');
 
 (async () => {
     try {
@@ -26,8 +27,9 @@ const { openIssue } = require('./openIssue');
         const context = Github.context;
         const repoContext = Github.context.repo;
         const owner = repoContext.owner;
-        const repo = repoContext.repo;
-
+        const repo = repoConte
+        
+        const prNumber = context.payload.pull_request?.number;
         let issue;
         let shouldClose = false;
 
@@ -46,14 +48,19 @@ const { openIssue } = require('./openIssue');
         const octokit = Github.getOctokit(token);
         Core.debug('Got octokit');
 
-        if (context.issue.number) {
-            Core.debug('Posting comment on existing issue');
+        if (prNumber) {
+            Core.debug(`Detected PR number: ${prNumber}`);
+            context.issue = {
+                ...context.repo,
+                number: prNumber
+              };
+            Core.debug(`Posting comment on existing issue ${context.issue.number}`);
             issue = await postComment(octokit, context, issueBody, issueLabels, approvers);
             Core.debug('Posted comment');
             // because this was a pre-existing issue, we do *not* close it at the end
             shouldClose = false;
         } else {
-            Core.debug('Creating issue');
+            Core.debug('No PR number detected, creating issue instead');
             issue = await openIssue(octokit, context, issueTitle, issueBody, issueLabels, approvers);
             Core.debug('Created issue');
             // we opened the issue ourselves, so closing later makes sense
