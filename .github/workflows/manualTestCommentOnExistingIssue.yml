@@ -20,7 +20,7 @@ jobs:
       uses: ./
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        approvers: 'ekeel'
+        approvers: 'nathanbyroft'
         minimumApprovals: '1'
         issueBody: |
           This is a manual test approval.
