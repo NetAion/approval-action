@@ -1,7 +1,7 @@
 name: Approval - Manual Test - Comment on Existing Issue
 
 on:
-  push:
+  pull_request:
     branches:
       - main
       - staging
@@ -20,7 +20,7 @@ jobs:
       uses: ./
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        approvers: 'nathanbyroft'
+        approvers: 'nathanbycroft'
         minimumApprovals: '1'
         issueBody: |
           This is a manual test approval.
