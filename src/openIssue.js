@@ -31,8 +31,6 @@ async function openIssue(octokit, context, issueTitle, issueBody, issueLabels, a
         Core.setFailed("Failed to create a new issue.");
         throw error;
     }
-
-    return issue;
 }
 
 module.exports = {
