@@ -19,7 +19,7 @@ inputs:
     required: true
 
   approvalType:
-    description: 'The type of approval to request. Can be either "issue" or "pr".'
+    description: 'The type of approval process. Can be either "issue" or "pr".'
     required: false
     default: 'issue'
 

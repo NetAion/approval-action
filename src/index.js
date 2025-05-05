@@ -21,7 +21,7 @@ const { postComment } = require('./postComment');
         const rejectWordsInput = Core.getInput('rejectWords');
 
         const approvers = approversInput.split(',').map(approver => approver.trim());
-        const issueLabels = issueLabelsInput.split(',').map(label => label.trim());
+        const issueLabels = issueLabelsInput ? issueLabelsInput.split(',').map(label => label.trim()).filter(Boolean) : [];
         const approveWords = approveWordsInput.split(',').map(word => word.trim());
         const rejectWords = rejectWordsInput.split(',').map(word => word.trim());
 
