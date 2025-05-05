@@ -18,6 +18,11 @@ inputs:
     description: 'The body of the issue that will be created.'
     required: true
 
+  approvalType:
+    description: 'The type of approval to request. Can be either "issue" or "pr".'
+    required: false
+    default: 'issue'
+
   issueLabels:
     description: 'A list of labels that will be added to the issue.'
     required: false

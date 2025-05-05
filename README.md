@@ -10,7 +10,7 @@ This action uses repository issues to create manual approvals for workflow runs.
 | `approvers`        | A comma separated list of GitHub usernames that are allowed to approve. | true     |                                |
 | `issueTitle`       | The title of the issue to create.                                       | true if `approvalType: 'issue'`|          |
 | `issueBody`        | The body of the issue to create, or the comment body if posting to an existing PR. | true |                         |
-| `approvalType`     | The type of approval process. Either (newly created) `issue` or (re-use existing) `pr`. | false | `issue`           |
+| `approvalType`     | The type of approval process. Can be either (newly created) `issue` or (re-use existing) `pr`. | false | `issue`    |
 | `issueLabels`      | A comma separated list of labels to add to the issue.                   | false    |                                |
 | `excludeInitiator` | Exclude the workflow initiator from the list of approvers.              | false    | false                          |
 | `approveWords`     | A comma separated list of case-insensitive words that will be used to approve. | false | approve, approved          |
