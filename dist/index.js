@@ -28928,8 +28928,8 @@ function appendMetadata(body, approvers = []) {
     metadataLines.push(`__Approvers:__ ${approvers.map(a => `@${a}`).join(' ')}`);
   }
   metadataLines.push(`__Minimum Approvals:__ ${Core.getInput('minimumApprovals')}`);
-  metadataLines.push(`__Approval Words:__ ${Core.getInput('approveWords')}`);
-  metadataLines.push(`__Rejection Words:__ ${Core.getInput('rejectWords')}`);
+  metadataLines.push(`__Approval Words:__ ${Core.getInput('approveWords')} (case insensitive)`);
+  metadataLines.push(`__Rejection Words:__ ${Core.getInput('rejectWords')} (case insensitive)`);
 
   return `${body}
 
@@ -28979,8 +28979,6 @@ async function openIssue(octokit, context, issueTitle, issueBody, issueLabels, a
         Core.setFailed("Failed to create a new issue.");
         throw error;
     }
-
-    return issue;
 }
 
 module.exports = {
@@ -29070,11 +29068,11 @@ const Core = __nccwpck_require__(2186);
  * @param {string[]} rejectWords - An array of words that indicate rejection.
  * @param {number} waitInterval - The interval in minutes to wait before checking for updates.
  * @param {number} timeout - The timeout in minutes for waiting for approval.
- * @param {boolean} shouldClose - Whether to close the issue after approval.
+ * @param {string} approvalType - Whether approval uses an issue or a PR.
  * @returns {Promise<void>} - A promise that resolves when the approval process is complete.
  * @throws {Error} - If the approval process times out or encounters an error.
  */
-async function waitForApproval(octokit, owner, repo, issueNumber, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, timeout, shouldClose) {
+async function waitForApproval(octokit, owner, repo, issueNumber, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, timeout, approvalType) {
     try {
         let issue = await octokit.rest.issues.get({
             owner,
@@ -29122,7 +29120,7 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                                 issue_number: issueNumber,
                                 body: `Approved by ${lastComment.user.login}.`
                             });
-                            if (shouldClose) {
+                            if (approvalType === 'issue') {
                                 await octokit.rest.issues.update({
                                     owner,
                                     repo,
@@ -29143,14 +29141,12 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                                 issue_number: issueNumber,
                                 body: `Rejected by ${lastComment.user.login}.`
                             });
-                            if (shouldClose) {
-                                await octokit.rest.issues.update({
-                                    owner,
-                                    repo,
-                                    issue_number: issueNumber,
-                                    state: 'closed'
-                                });
-                            };
+                            await octokit.rest.issues.update({
+                                owner,
+                                repo,
+                                issue_number: issueNumber,
+                                state: 'closed'
+                            });
                             break;
                         }
                     }
@@ -29170,7 +29166,7 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                 body: `Timed out after waiting for ${timeout} minutes for approval.`
             });
 
-            if (shouldClose) {
+            if (approvalType === 'issue') {
                 await octokit.rest.issues.update({
                     owner,
                     repo,
@@ -31102,6 +31098,7 @@ const { postComment } = __nccwpck_require__(371);
         const minimumApprovals = Core.getInput('minimumApprovals');
         const issueTitle = Core.getInput('issueTitle');
         const issueBody = Core.getInput('issueBody');
+        const approvalType = Core.getInput('approvalType');
         const excludeInitiator = Core.getInput('excludeInitiator');
         const waitInterval = Core.getInput('waitInterval');
         const waitTimeout = Core.getInput('waitTimeout');
@@ -31122,11 +31119,11 @@ const { postComment } = __nccwpck_require__(371);
         const repo = repoContext.repo;
         const prNumber = context.payload.pull_request?.number;
         let issue;
-        let shouldClose = false;
 
         Core.debug(`Issue title: ${issueTitle}`);
         Core.debug(`Issue body: ${issueBody}`);
         Core.debug(`Approvers: ${approvers}`);
+        Core.debug(`Approval type: ${approvalType}`);
         Core.debug(`Issue labels: ${issueLabels}`);
         Core.debug(`Minimum approvals: ${minimumApprovals}`);
         Core.debug(`Exclude initiator: ${excludeInitiator}`);
@@ -31134,38 +31131,31 @@ const { postComment } = __nccwpck_require__(371);
         Core.debug(`Reject words: ${rejectWords}`);
         Core.debug(`Owner: ${owner}`);
         Core.debug(`Repo: ${repo}`);
+        Core.debug(`Event name: ${context.eventName}`);
+        Core.debug(`Payload keys: ${Object.keys(context.payload).join(',')}`);
+        Core.debug(`PR number: ${prNumber}`);
 
         Core.debug('Getting octokit');
         const octokit = Github.getOctokit(token);
         Core.debug('Got octokit');
 
-        Core.debug(`Event name: ${context.eventName}`);
-        Core.debug(`Payload keys: ${Object.keys(context.payload).join(',')}`);
-        Core.debug(`PR object: ${JSON.stringify(context.payload.pull_request, null, 2)}`);
-
-        if (prNumber) {
-            Core.debug(`Detected PR number: ${prNumber}`);
-            context.issue = { ...context.repo, number: prNumber };
-            Core.debug(`Posting comment on existing issue ${context.issue.number}`);
-            issue = await postComment(octokit, context, issueBody, issueLabels, approvers);
-            Core.debug('Posted comment');
-            // because this was a pre-existing issue, we do *not* close it at the end
-            shouldClose = false;
-        } else {
-            // only open a new issue when explicitly invoked without a PR context
-            if (!Core.getInput('issueTitle')) {
-                throw new Error('issueTitle input is required when not commenting on a PR');
-            }
-            
-            Core.debug('No PR number detected, creating issue instead');
+        if (approvalType === 'issue') {
+            Core.debug('Creating issue');
             issue = await openIssue(octokit, context, issueTitle, issueBody, issueLabels, approvers);
             Core.debug('Created issue');
-            // we opened the issue ourselves, so closing later makes sense
-            shouldClose = true;
+        } else if (approvalType === 'pr') {
+            if (!prNumber) {
+                throw new Error('Workflow needs a PR context when approvalType input is pr');
+            }
+            // re-use existing issue when invoked from a PR context
+            context.issue = { ...context.repo, number: prNumber };
+            Core.debug(`Posting comment on existing PR: ${context.issue.number}`);
+            issue = await postComment(octokit, context, issueBody, issueLabels, approvers);
+            Core.debug('Posted comment');
         }
 
         Core.debug('Waiting for issue approval');
-        const approved = await waitForApproval(octokit, owner, repo, issue.data.number, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, waitTimeout, shouldClose);
+        const approved = await waitForApproval(octokit, owner, repo, issue.data.number, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, waitTimeout, approvalType);
         Core.debug('Issue review completed');
 
         if (approved) {

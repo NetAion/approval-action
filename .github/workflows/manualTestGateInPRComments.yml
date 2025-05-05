@@ -1,0 +1,40 @@
+name: Approval - Manual Test - Gated Review Inside PR Comments
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main, staging]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run Approval Action
+      id: approval
+      uses: ./
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        approvers: 'nathanbycroft'
+        #minimumApprovals: '1'
+        issueBody: |
+          #### Waiting for Approval 
+
+          This branch is protected by a manual approval step.
+          
+          Please approve or deny this workflow before the changes can be merged and deployed to production.
+        #issueLabels: 'ApprovalAction,ManualApproval'
+        #excludeInitiator: 'false'
+        #approveWords: 'approve, approved'
+        #rejectWords: 'deny, denied, reject, rejected'
+        #waitInterval: '1'
+        approvalType: 'pr'
+        waitTimeout: '5'
+
+    - name: Get the output
+      run: |
+        echo "Approved: ${{ steps.approval.outputs.approved }}"

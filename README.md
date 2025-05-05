@@ -4,18 +4,19 @@ This action uses repository issues to create manual approvals for workflow runs.
 
 ## Inputs
 
-| Name             | Description                                                             | Required | Default                        |
-| ---------------- | ----------------------------------------------------------------------- | -------- | ------------------------------ |
+| Name               | Description                                                             | Required | Default                        |
+| ------------------ | ----------------------------------------------------------------------- | -------- | ------------------------------ |
 | `token`            | A GitHub token with repo scope.                                         | true     |                                |
 | `approvers`        | A comma separated list of GitHub usernames that are allowed to approve. | true     |                                |
-| `issueTitle`       | The title of the issue to create.                                       | true if creating a new issue for approval - see [usage](#usage) |                                |
-| `issueBody`        | The body of the issue to create, or the comment body if posting to an existing issue | true     |                                |
+| `issueTitle`       | The title of the issue to create.                                       | true if `approvalType: 'issue'`|          |
+| `issueBody`        | The body of the issue to create, or the comment body if posting to an existing PR. | true |                         |
+| `approvalType`     | The type of approval process. Either (newly created) `issue` or (re-use existing) `pr`. | false | `issue`           |
 | `issueLabels`      | A comma separated list of labels to add to the issue.                   | false    |                                |
 | `excludeInitiator` | Exclude the workflow initiator from the list of approvers.              | false    | false                          |
-| `approveWords`     | A comma separated list of (case-insensitive) words that will be used to approve.           | false    | approve, approved              |
-| `rejectWords`      | A comma separated list of (case-insensitive) words that will be used to reject.            | false    | deny, denied, reject, rejected |
+| `approveWords`     | A comma separated list of case-insensitive words that will be used to approve. | false | approve, approved          |
+| `rejectWords`      | A comma separated list of case-insensitive words that will be used to reject. | false | deny, denied, reject, rejected |
 | `waitInterval`     | The number of minutes to wait between checks for approvals.             | false    | 1                              |
-| `waitTimeout`      | The number of minutes to wait before timing out.                        | false    | 5                              |
+| `waitTimeout`      | The number of minutes to wait before timing out.                        | false    | 360                            |
 | `minimumApprovals` | The number of approvals/rejections required to continue the workflow.   | false    | 1                              |
 
 ## Outputs
@@ -30,7 +31,9 @@ This action is a JavaScript action and runs on Ubuntu, macOS, and Windows.
 
 ## Usage
 
-### Create a new issue to approve the workflow
+Two types of gated approval process are supported.
+
+### 1. Create a new issue to approve or deny the workflow
 
 ```yaml
 - uses: ekeel/approval-action@v1.1.0
@@ -71,40 +74,25 @@ This action is a JavaScript action and runs on Ubuntu, macOS, and Windows.
     waitTimeout: '5'
 ```
 
-### Post comments to an existing issue or PR to approve the workflow
+>Note: The issue is closed when the workflow is approved or denied.
+
+### 2. Post comments to an existing PR to approve or deny the workflow
+
+Select with input `approvalType: 'pr'`. The workflow context must also be a PR, i.e., has been fired by a pull-request-related event.
 
 ```yaml
 - uses: ekeel/approval-action@v1.1.0
   with:
-    # A GitHub token with repo scope.
-    # The default secrets.GITHUB_TOKEN does not work with octokit to open/update/close issues.
     token: ${{ secrets.GITHUB_TOKEN }}
-
-    # A comma separated list of GitHub usernames that are allowed to approve.
-    # Example: 'ekeel,octocat'
     approvers: 'ekeel'
+    issueBody: |
+      #### Waiting for Approval 
 
-    # The number of approvals/rejections required to continue the workflow.
-    minimumApprovals: '1'
-
-    # The body of the issue comment.
-    issueBody: 'Test issue comment body'
-
-    # A comma separated list of labels to add to the issue.
-    issueLabels: 'ManualApproval,ApprovalAction'
-
-    # Exclude the workflow initiator from the list of approvers.
-    excludeInitiator: 'false'
-
-    # A comma separated list of words that will be used to approve.
-    approveWords: 'approve, approved'
-
-    # A comma separated list of words that will be used to reject.
-    rejectWords: 'deny, denied, reject, rejected'
-
-    # The number of minutes to wait between checks for approvals.
-    waitInterval: '1'
-
-    # The number of minutes to wait before timing out.
-    waitTimeout: '5'
+      This branch is protected by a manual approval step.
+          
+      Please approve or deny this workflow before the changes can be merged and deployed to production.
+    approvalType: 'pr'
+    waitTimeout: '60'
 ```
+
+>Note: the PR remains open until merged if the workflow is approved. The PR is closed if the workflow is denied.

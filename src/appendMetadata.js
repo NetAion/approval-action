@@ -14,8 +14,8 @@ function appendMetadata(body, approvers = []) {
     metadataLines.push(`__Approvers:__ ${approvers.map(a => `@${a}`).join(' ')}`);
   }
   metadataLines.push(`__Minimum Approvals:__ ${Core.getInput('minimumApprovals')}`);
-  metadataLines.push(`__Approval Words:__ ${Core.getInput('approveWords')}`);
-  metadataLines.push(`__Rejection Words:__ ${Core.getInput('rejectWords')}`);
+  metadataLines.push(`__Approval Words:__ ${Core.getInput('approveWords')} (case insensitive)`);
+  metadataLines.push(`__Rejection Words:__ ${Core.getInput('rejectWords')} (case insensitive)`);
 
   return `${body}
 
