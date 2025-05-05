@@ -12,7 +12,7 @@ const Core = require('@actions/core');
  * @param {string[]} rejectWords - An array of words that indicate rejection.
  * @param {number} waitInterval - The interval in minutes to wait before checking for updates.
  * @param {number} timeout - The timeout in minutes for waiting for approval.
- * @param {string} approvalType - Whether approval uses an issue or a PR.
+ * @param {string} approvalType - Whether approval is by issue or PR.
  * @returns {Promise<void>} - A promise that resolves when the approval process is complete.
  * @throws {Error} - If the approval process times out or encounters an error.
  */
@@ -85,12 +85,14 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                                 issue_number: issueNumber,
                                 body: `Rejected by ${lastComment.user.login}.`
                             });
-                            await octokit.rest.issues.update({
-                                owner,
-                                repo,
-                                issue_number: issueNumber,
-                                state: 'closed'
-                            });
+                            if (approvalType === 'issue') {
+                                await octokit.rest.issues.update({
+                                    owner,
+                                    repo,
+                                    issue_number: issueNumber,
+                                    state: 'closed'
+                                });
+                            }
                             break;
                         }
                     }

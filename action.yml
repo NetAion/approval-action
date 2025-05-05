@@ -1,5 +1,5 @@
 name: 'Approval Action'
-description: 'This action requests an approval to continue the workflow using issue comments.'
+description: 'This action requests an approval to continue the workflow using issue and PR comments.'
 
 inputs:
   token:
@@ -15,7 +15,7 @@ inputs:
     required: false
 
   issueBody:
-    description: 'The body of the issue that will be created.'
+    description: 'The body of the issue that will be created, or the comment body when posting to an existing PR.'
     required: true
 
   approvalType:
@@ -24,13 +24,13 @@ inputs:
     default: 'issue'
 
   issueLabels:
-    description: 'A list of labels that will be added to the issue.'
+    description: 'A list of labels that will be added to the issue or PR.'
     required: false
 
   excludeInitiator:
     description: 'If true, the user that triggered the workflow will not be able to approve the workflow.'
     required: false
-    default: false
+    default: 'false'
 
   approveWords:
     description: 'A list of words that can be used to approve the workflow.'
@@ -45,17 +45,17 @@ inputs:
   waitInterval:
     description: 'The number of minutes to wait before checking for new comments.'
     required: false
-    default: 1
+    default: '1'
 
   waitTimeout:
     description: 'The number of minutes to wait before timing out.'
     required: false
-    default: 360
+    default: '360'
 
   minimumApprovals:
     description: 'The minimum number of approvals required to continue the workflow.'
     required: false
-    default: 1
+    default: '1'
 
 outputs:
   approved:

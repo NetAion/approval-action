@@ -28930,6 +28930,7 @@ function appendMetadata(body, approvers = []) {
   metadataLines.push(`__Minimum Approvals:__ ${Core.getInput('minimumApprovals')}`);
   metadataLines.push(`__Approval Words:__ ${Core.getInput('approveWords')} (case insensitive)`);
   metadataLines.push(`__Rejection Words:__ ${Core.getInput('rejectWords')} (case insensitive)`);
+  metadataLines.push(`__Checking for comments every:__ ${Core.getInput('waitInterval')} minutes`);
   metadataLines.push(`__Timeout:__ ${Core.getInput('waitTimeout')} minutes`);
 
   return `${body}
@@ -29069,7 +29070,7 @@ const Core = __nccwpck_require__(2186);
  * @param {string[]} rejectWords - An array of words that indicate rejection.
  * @param {number} waitInterval - The interval in minutes to wait before checking for updates.
  * @param {number} timeout - The timeout in minutes for waiting for approval.
- * @param {string} approvalType - Whether approval uses an issue or a PR.
+ * @param {string} approvalType - Whether approval is by issue or PR.
  * @returns {Promise<void>} - A promise that resolves when the approval process is complete.
  * @throws {Error} - If the approval process times out or encounters an error.
  */
@@ -29142,12 +29143,14 @@ async function waitForApproval(octokit, owner, repo, issueNumber, approvers, app
                                 issue_number: issueNumber,
                                 body: `Rejected by ${lastComment.user.login}.`
                             });
-                            await octokit.rest.issues.update({
-                                owner,
-                                repo,
-                                issue_number: issueNumber,
-                                state: 'closed'
-                            });
+                            if (approvalType === 'issue') {
+                                await octokit.rest.issues.update({
+                                    owner,
+                                    repo,
+                                    issue_number: issueNumber,
+                                    state: 'closed'
+                                });
+                            }
                             break;
                         }
                     }
@@ -31157,7 +31160,7 @@ const { postComment } = __nccwpck_require__(371);
 
         Core.debug('Waiting for issue approval');
         const approved = await waitForApproval(octokit, owner, repo, issue.data.number, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, waitTimeout, approvalType);
-        Core.debug('Issue review completed');
+        Core.debug('Workflow approval gate completed');
 
         if (approved) {
             Core.debug('Issue approved')

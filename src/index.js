@@ -68,7 +68,7 @@ const { postComment } = require('./postComment');
 
         Core.debug('Waiting for issue approval');
         const approved = await waitForApproval(octokit, owner, repo, issue.data.number, approvers, approveWords, rejectWords, minimumApprovals, waitInterval, waitTimeout, approvalType);
-        Core.debug('Issue review completed');
+        Core.debug('Workflow approval gate completed');
 
         if (approved) {
             Core.debug('Issue approved')
