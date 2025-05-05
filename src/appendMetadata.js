@@ -17,7 +17,7 @@ function appendMetadata(body, approvers = []) {
   metadataLines.push(`__Approval Words:__ ${Core.getInput('approveWords')} (case insensitive)`);
   metadataLines.push(`__Rejection Words:__ ${Core.getInput('rejectWords')} (case insensitive)`);
   metadataLines.push(`__Checking for comments every:__ ${Core.getInput('waitInterval')} minutes`);
-  metadataLines.push(`__Timeout:__ ${Core.getInput('waitTimeout')} minutes`);
+  metadataLines.push(`__Waiting for:__ ${Core.getInput('waitTimeout')} minutes before timing out`);
 
   return `${body}
 
