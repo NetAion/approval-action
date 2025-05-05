@@ -1,4 +1,4 @@
-name: Approval - Manual Test - Gated Review Inside PR Comments
+name: Approval - Manual Gated Review Inside PR Comments
 
 on:
   pull_request:
