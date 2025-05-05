@@ -20,16 +20,11 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         approvers: 'nathanbycroft'
-        #minimumApprovals: '1'
         issueBody: |
           #### Waiting for Approval 
 
           This branch is protected by a manual approval step. Please approve or deny this workflow before the changes can be merged and deployed to production.
-        #issueLabels: 'ApprovalAction,ManualApproval'
-        #excludeInitiator: 'false'
-        #approveWords: 'approve, approved'
-        #rejectWords: 'deny, denied, reject, rejected'
-        #waitInterval: '1'
+        issueLabels: 'ApprovalAction,ManualApproval'
         approvalType: 'pr'
         waitTimeout: '5'
 
