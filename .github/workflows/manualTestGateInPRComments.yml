@@ -24,9 +24,7 @@ jobs:
         issueBody: |
           #### Waiting for Approval 
 
-          This branch is protected by a manual approval step.
-          
-          Please approve or deny this workflow before the changes can be merged and deployed to production.
+          This branch is protected by a manual approval step. Please approve or deny this workflow before the changes can be merged and deployed to production.
         #issueLabels: 'ApprovalAction,ManualApproval'
         #excludeInitiator: 'false'
         #approveWords: 'approve, approved'
