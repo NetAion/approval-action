@@ -1,4 +1,4 @@
-# Approval V1
+# Approval V1.1
 
 This action uses repository issues to create manual approvals for workflow runs.
 
@@ -8,10 +8,10 @@ This action uses repository issues to create manual approvals for workflow runs.
 | ------------------ | ----------------------------------------------------------------------- | -------- | ------------------------------ |
 | `token`            | A GitHub token with repo scope.                                         | true     |                                |
 | `approvers`        | A comma separated list of GitHub usernames that are allowed to approve. | true     |                                |
-| `issueTitle`       | The title of the issue to create.                                       | true if `approvalType: 'issue'`|          |
+| `issueTitle`       | The title of the issue to create.                                       | true if `approvalType: 'issue'`. Ignored if `approvalType: 'pr'`|          |
 | `issueBody`        | The body of the issue to create, or the comment body if posting to an existing PR. | true |                         |
 | `approvalType`     | The type of approval process. Can be either (newly created) `issue` or (re-use existing) `pr`. | false | `issue`    |
-| `issueLabels`      | A comma separated list of labels to add to the issue.                   | false    |                                |
+| `issueLabels`      | A comma separated list of labels to add to the issue or PR.             | false    |                                |
 | `excludeInitiator` | Exclude the workflow initiator from the list of approvers.              | false    | false                          |
 | `approveWords`     | A comma separated list of case-insensitive words that will be used to approve. | false | approve, approved          |
 | `rejectWords`      | A comma separated list of case-insensitive words that will be used to reject. | false | deny, denied, reject, rejected |
@@ -78,7 +78,7 @@ Two types of gated approval process are supported.
 
 ### 2. Post comments to an existing PR to approve or deny the workflow
 
-Select with input `approvalType: 'pr'`. The workflow context must also be a PR, i.e., has been fired by a pull-request-related event.
+Select with input `approvalType: 'pr'`. The workflow context must also be a PR, i.e., the action has been fired by a pull-request-related event.
 
 ```yaml
 - uses: ekeel/approval-action@v1.1.0
@@ -88,9 +88,7 @@ Select with input `approvalType: 'pr'`. The workflow context must also be a PR, 
     issueBody: |
       #### Waiting for Approval 
 
-      This branch is protected by a manual approval step.
-          
-      Please approve or deny this workflow before the changes can be merged and deployed to production.
+      This branch is protected by a manual approval step. Please approve or deny this workflow before the changes can be merged and deployed to production.
     approvalType: 'pr'
     waitTimeout: '60'
 ```
